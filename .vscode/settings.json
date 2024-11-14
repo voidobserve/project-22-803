@@ -13,6 +13,7 @@
         "config.h": "c",
         "keyscan.h": "c",
         "lvd.h": "c",
-        "uart.h": "c"
+        "uart.h": "c",
+        "sys.h": "c"
     }
 }

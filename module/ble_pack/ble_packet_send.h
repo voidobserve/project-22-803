@@ -24,7 +24,7 @@
 */
 // #define SEND_BEACON_MAX_TIMES							(255) // 按下按键1次，灯就会变化，有1~3次内会无法识别，效果跟 60000 的相似
 // #define SEND_BEACON_MAX_TIMES							(100) // 按下按键2~3次内，灯就会变化
-#define SEND_BEACON_MAX_TIMES							(70) //
+#define SEND_BEACON_MAX_TIMES							(75) //
 // #define SEND_BEACON_MAX_TIMES							(60) // 
 // #define SEND_BEACON_MAX_TIMES							(50) // 有概率收不到，效果比			25  好
 // #define SEND_BEACON_MAX_TIMES							(30) //

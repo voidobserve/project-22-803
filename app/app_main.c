@@ -50,7 +50,7 @@
 */
 
 #ifndef SYSTEM_NOT_SLEEP
-	volatile uint8_t sys_sleep_enable = 0x0;
+volatile uint8_t sys_sleep_enable = 0x0;
 volatile uint32_t sys_sleep_count = 0x0;
 #endif
 
@@ -175,7 +175,7 @@ void main(void)
 		// 5ms 扫描一次按键
 		if (hal_clock_time_exceed_rtc(&rtc_rcscan_t, 5000))
 		{
-			rcscan_scan();
+			rcscan_scan(); // 
 		}
 
 		if (key_info.handle_flag)
@@ -191,6 +191,7 @@ void main(void)
 
 		// 5ms 扫描一次广播发送
 		if (hal_clock_time_exceed_rtc(&rtc_adv_start_t, 5000))
+		// if (hal_clock_time_exceed_rtc(&rtc_adv_start_t, 10000)) // 10 ms扫描一次广播发送
 		{
 			// ble_packet_send();
 			ble_adv_start();
@@ -228,16 +229,6 @@ void main(void)
 
 			// 配置唤醒引脚
 			wakeup_timer_init(WAKEUP_IO, 0x1, 0x0, 0x1);
-			// hal_gpios_set(BIT6, GPIO_INPUT, GPIO_HIGH); // 重新配置唤醒引脚为输入上拉
-			// hal_gpios_set(BIT7, GPIO_INPUT, GPIO_HIGH);
-
-			// hal_gpios_set(INPUT_GPIO_BITS, GPIO_INPUT, GPIO_HIGH); // 重新配置唤醒引脚为输入上拉，上面这个wakeup_timer_init()中可能没有配置
-			// hal_gpios_set(BIT7, GPIO_INPUT, GPIO_HIGH);
-
-			hal_gpios_set(INPUT_GPIO_BITS, GPIO_INPUT, GPIO_HIGH); // 重新配置唤醒引脚为输入上拉，上面这个wakeup_timer_init()中可能没有配置
-			hal_gpios_set(OTPUT_GPIO_BITS, GPIO_OUTPUT, GPIO_LOW);
-
-			// hal_gpios_set(BIT8, GPIO_OUTPUT, GPIO_LOW);
 
 #if (SYS_CRASH_WTD_RESET_ENABLE)
 			// disable wtd
@@ -246,11 +237,37 @@ void main(void)
 			watchdog_disable();
 #endif
 
+			// hal_gpio_set_port(SINGLE_LED_GPIO_INDEX,GPIO_INPUT, 0); // 输入上拉
+			// 配置LED端口为输入下拉
+			sys_set_port_mux(PAD_MUX_BASE_ADDR + (SINGLE_LED_GPIO_INDEX << 2), (PAD_MUX_FUNCTION_0 | 0x01)); // 功能--作为GPIO，使能下拉，禁止上拉
+			gpio_set_bit_direction(1 << SINGLE_LED_GPIO_INDEX, GPIO_INPUT);									 // 输入模式
+
 			// 进入休眠，唤醒是重新跑main函数的
 			sys_sleep_down();
 
 			// 必须要延时10ms
 			delay_ms(10);
+
+			// init io
+			hal_gpio_init(); // 打开GPIO时钟
+			// hal_gpio_set_port(SINGLE_LED_GPIO_INDEX,GPIO_OUTPUT, GPIO_HIGH); // 不能设置为高电平，在不按遥控器时，灯会一直闪
+
+			// init rtc
+			hal_rtc_init();
+
+			// config unsleep
+			write_reg(TOP_POWER_CTRL_REG, 0x00);
+			// off wakeup timer
+			wakeup_timer_disable();
+			wt_int_clear();
+
+#if (SYS_CRASH_WTD_RESET_ENABLE)
+			// init watch dog
+			wdg_int_clear();
+			wdg_feed_dog();
+			watchdog_init(WATCH_DOG_RESET_TIME);
+#endif
+
 #if LOG_ERROR
 			print("unsleep\n");
 #endif
